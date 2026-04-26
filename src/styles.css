@@ -95,6 +95,157 @@ h3 {
   place-items: center;
 }
 
+.loading-shell {
+  min-height: 100vh;
+  padding: 24px;
+  display: grid;
+  place-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.loading-orb {
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  filter: blur(12px);
+  opacity: 0.45;
+  animation: drift 10s ease-in-out infinite;
+}
+
+.loading-orb-left {
+  top: 8%;
+  left: -60px;
+  background: radial-gradient(circle, rgba(198, 140, 43, 0.7), transparent 68%);
+}
+
+.loading-orb-right {
+  right: -80px;
+  bottom: 6%;
+  background: radial-gradient(circle, rgba(45, 111, 143, 0.66), transparent 70%);
+  animation-delay: -4s;
+}
+
+.loading-card {
+  width: min(760px, 100%);
+  padding: 42px 38px;
+  border-radius: 36px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.02)),
+    var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(20px);
+  position: relative;
+  z-index: 1;
+}
+
+.loading-badge {
+  display: inline-flex;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(198, 140, 43, 0.14);
+  color: var(--gold);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.loading-copy {
+  max-width: 560px;
+  color: var(--muted);
+  line-height: 1.7;
+  margin: 14px 0 0;
+}
+
+.loading-visual {
+  position: relative;
+  height: 220px;
+  margin: 30px 0 10px;
+  display: grid;
+  place-items: center;
+}
+
+.loading-ring {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background:
+    conic-gradient(from 180deg, rgba(198, 140, 43, 0.12), var(--gold), rgba(45, 111, 143, 0.9), rgba(198, 140, 43, 0.12));
+  display: grid;
+  place-items: center;
+  animation: spin 3.8s linear infinite;
+  box-shadow: 0 0 30px rgba(198, 140, 43, 0.22);
+}
+
+.loading-core {
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.18), transparent 40%),
+    var(--surface-strong);
+  border: 1px solid var(--line);
+}
+
+.loading-pulse {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(198, 140, 43, 0.28);
+  animation: pulseOut 3.6s ease-out infinite;
+}
+
+.loading-pulse-one {
+  width: 170px;
+  height: 170px;
+}
+
+.loading-pulse-two {
+  width: 210px;
+  height: 210px;
+  animation-delay: 1.2s;
+}
+
+.loading-progress {
+  width: 100%;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(16, 36, 44, 0.08);
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+.loading-progress-bar {
+  display: block;
+  width: 38%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(198, 140, 43, 0.35), var(--gold), rgba(45, 111, 143, 0.8));
+  animation: loadingSweep 1.8s ease-in-out infinite;
+}
+
+.loading-meta {
+  margin-top: 26px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.loading-stat {
+  padding: 16px 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.28);
+  border: 1px solid var(--line);
+}
+
+.loading-card .brand-signature {
+  margin-bottom: 12px;
+}
+
+.loading-card .brand-title {
+  color: var(--gold);
+}
+
 .auth-card,
 .brand-card,
 .panel,
@@ -173,6 +324,86 @@ h3 {
   margin-top: 28px;
 }
 
+.brand-signature {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.brand-signature-small {
+  margin-bottom: 10px;
+}
+
+.brand-signature-copy {
+  display: grid;
+  gap: 3px;
+}
+
+.brand-kicker {
+  margin: 0;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+}
+
+.brand-powered {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.brand-title {
+  font-size: 0.88rem;
+  color: var(--blue);
+  font-weight: 600;
+}
+
+.site-logo {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid rgba(45, 111, 143, 0.22);
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.72)),
+    linear-gradient(145deg, rgba(45, 111, 143, 0.14), rgba(198, 140, 43, 0.18));
+  box-shadow: 0 16px 32px rgba(16, 36, 44, 0.14);
+}
+
+.site-logo-large {
+  width: 88px;
+  height: 88px;
+}
+
+.site-logo-small {
+  width: 60px;
+  height: 60px;
+}
+
+.site-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.site-logo-fallback {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.72)),
+    linear-gradient(150deg, rgba(79, 182, 223, 0.18), rgba(198, 140, 43, 0.2));
+  color: var(--blue);
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
 .brand-badge {
   display: inline-flex;
   padding: 8px 12px;
@@ -210,6 +441,46 @@ body.theme-night .field input,
 body.theme-night .field textarea,
 body.theme-night .field select {
   background: rgba(255, 255, 255, 0.04);
+}
+
+.password-field {
+  position: relative;
+}
+
+.password-field input {
+  padding-right: 58px;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+}
+
+.password-toggle:hover {
+  background: rgba(45, 111, 143, 0.08);
+  color: var(--blue);
+}
+
+.password-toggle:focus-visible {
+  outline: none;
+  border-color: rgba(45, 111, 143, 0.32);
+  background: rgba(45, 111, 143, 0.08);
+  color: var(--blue);
+}
+
+.password-toggle svg {
+  width: 20px;
+  height: 20px;
 }
 
 .page-shell {
@@ -565,6 +836,79 @@ body.theme-night .field select {
   border: 1px solid rgba(204, 90, 78, 0.3);
 }
 
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 18, 24, 0.52);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  z-index: 1000;
+}
+
+.confirm-card {
+  width: min(460px, 100%);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  box-shadow: var(--shadow);
+  padding: 28px;
+  backdrop-filter: blur(18px);
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulseOut {
+  0% {
+    transform: scale(0.84);
+    opacity: 0.65;
+  }
+  70% {
+    transform: scale(1.12);
+    opacity: 0.06;
+  }
+  100% {
+    transform: scale(1.16);
+    opacity: 0;
+  }
+}
+
+@keyframes loadingSweep {
+  0% {
+    transform: translateX(-115%);
+  }
+  55% {
+    transform: translateX(210%);
+  }
+  100% {
+    transform: translateX(210%);
+  }
+}
+
+@keyframes drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(18px, -22px, 0) scale(1.08);
+  }
+}
+
 @media (max-width: 1080px) {
   .auth-card,
   .page-shell,
@@ -603,7 +947,8 @@ body.theme-night .field select {
   .meta-grid,
   .result-grid,
   .hero-stats,
-  .timer-meta {
+  .timer-meta,
+  .loading-meta {
     grid-template-columns: 1fr;
   }
 

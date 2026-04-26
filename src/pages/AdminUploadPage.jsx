@@ -22,7 +22,7 @@ function AdminUploadPage({ context }) {
     setDuration(activePool.durationMinutes);
   }, [poolKey, context.questionPools]);
 
-  const handleImport = () => {
+  const handleImport = async () => {
     if (!jsonText.trim()) {
       setMessage("Paste a valid JSON question array first.");
       return;
@@ -30,18 +30,13 @@ function AdminUploadPage({ context }) {
 
     try {
       const parsed = JSON.parse(jsonText);
-      const questions = normalizeQuestions(parsed);
+      const imports = buildPoolImports(parsed, poolKey, title, duration);
 
-      context.onSaveQuestionSet({
-        poolKey,
-        config: {
-          title: title.trim() || getDefaultPoolTitle(poolKey),
-          durationMinutes: clampDuration(Number(duration) || 60),
-          questions,
-        },
-      });
+      for (const item of imports) {
+        await context.onSaveQuestionSet(item);
+      }
 
-      setMessage(`Imported ${questions.length} questions successfully into the ${poolKey === "junior" ? "JSS" : "SS"} pool.`);
+      setMessage(formatImportMessage(imports));
     } catch (error) {
       setMessage(error.message);
     }
@@ -56,7 +51,7 @@ function AdminUploadPage({ context }) {
     event.target.value = "";
   };
 
-  const handleStudentCreate = (event) => {
+  const handleStudentCreate = async (event) => {
     event.preventDefault();
 
     if (!studentForm.displayName.trim() || !studentForm.email.trim() || !studentForm.password) {
@@ -65,12 +60,12 @@ function AdminUploadPage({ context }) {
     }
 
     try {
-      context.onAdminCreateStudent(studentForm);
+      await context.onAdminCreateStudent(studentForm);
       setStudentMessage("Student added successfully.");
       setStudentForm({
         displayName: "",
         email: "",
-        group: "",
+        group: "JSS1",
         password: "",
       });
     } catch (error) {
@@ -78,14 +73,18 @@ function AdminUploadPage({ context }) {
     }
   };
 
-  const handleStudentRemove = (email) => {
+  const handleStudentRemove = async (email) => {
     const confirmed = window.confirm(`Remove ${email} and delete the saved scores for this student?`);
     if (!confirmed) {
       return;
     }
 
-    context.onAdminRemoveStudent(email);
-    setStudentMessage("Student removed successfully.");
+    try {
+      await context.onAdminRemoveStudent(email);
+      setStudentMessage("Student removed successfully.");
+    } catch (error) {
+      setStudentMessage(error.message);
+    }
   };
 
   return (
@@ -202,7 +201,7 @@ function AdminUploadPage({ context }) {
         </div>
 
         <p className="panel-copy">
-          Paste JSON or upload a .json file containing an array of question objects with text, options, and answer.
+          You can upload a single JSS or SS array, or a combined JSON object with separate `junior` and `senior` sections.
         </p>
 
         <label className="field">
@@ -235,7 +234,7 @@ function AdminUploadPage({ context }) {
             rows="12"
             value={jsonText}
             onChange={(event) => setJsonText(event.target.value)}
-            placeholder='[{"text":"2 + 2 = ?","options":["3","4","5","6"],"answer":1}]'
+            placeholder='{"junior":[{"text":"2 + 2 = ?","options":["3","4","5","6"],"answer":1}],"senior":[{"text":"Solve 2x + 3 = 11","options":["2","3","4","5"],"answer":2}]}'
           />
         </label>
 
@@ -249,12 +248,6 @@ function AdminUploadPage({ context }) {
             <input type="file" accept=".json" onChange={handleFile} />
           </label>
 
-          <button className="primary-button" onClick={context.onRestoreDefaults}>
-            Restore Default Set
-          </button>
-        </div>
-
-        <div className="admin-actions">
           <button className="primary-button" onClick={() => context.onRestoreDefaults(poolKey)}>
             Restore Default Set
           </button>
@@ -292,6 +285,66 @@ function normalizeQuestions(parsed) {
   });
 }
 
+function buildPoolImports(parsed, activePoolKey, title, duration) {
+  if (Array.isArray(parsed)) {
+    return [
+      {
+        poolKey: activePoolKey,
+        config: {
+          title: title.trim() || getDefaultPoolTitle(activePoolKey),
+          durationMinutes: clampDuration(Number(duration) || 60),
+          questions: normalizeQuestions(parsed),
+        },
+      },
+    ];
+  }
+
+  if (!parsed || typeof parsed !== "object") {
+    throw new Error("Upload a valid array or a JSON object with junior and senior question sections.");
+  }
+
+  const juniorSource = parsed.junior || parsed.jss;
+  const seniorSource = parsed.senior || parsed.ss;
+
+  if (!juniorSource && !seniorSource) {
+    throw new Error("Combined JSON must contain a junior/jss section, a senior/ss section, or both.");
+  }
+
+  const imports = [];
+
+  if (juniorSource) {
+    imports.push({
+      poolKey: "junior",
+      config: normalizePoolSource(juniorSource, "JSS Mathematics Mock"),
+    });
+  }
+
+  if (seniorSource) {
+    imports.push({
+      poolKey: "senior",
+      config: normalizePoolSource(seniorSource, "SS Mathematics Mock"),
+    });
+  }
+
+  return imports;
+}
+
+function normalizePoolSource(source, fallbackTitle) {
+  if (Array.isArray(source)) {
+    return {
+      title: fallbackTitle,
+      durationMinutes: 60,
+      questions: normalizeQuestions(source),
+    };
+  }
+
+  return {
+    title: source.title?.trim() || fallbackTitle,
+    durationMinutes: clampDuration(Number(source.durationMinutes) || 60),
+    questions: normalizeQuestions(source.questions),
+  };
+}
+
 function clampDuration(value) {
   return Math.min(180, Math.max(5, value));
 }
@@ -320,6 +373,11 @@ function buildStudentRows(users, history) {
 
 function getDefaultPoolTitle(poolKey) {
   return poolKey === "junior" ? "JSS Mathematics Mock" : "SS Mathematics Mock";
+}
+
+function formatImportMessage(imports) {
+  const labels = imports.map((item) => `${item.poolKey === "junior" ? "JSS" : "SS"} (${item.config.questions.length})`);
+  return `Imported successfully into ${labels.join(" and ")}.`;
 }
 
 export default AdminUploadPage;

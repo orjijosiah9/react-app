@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import BrandSignature from "../components/BrandSignature";
+import PasswordField from "../components/PasswordField";
 
 function AdminLoginPage({ onLogin }) {
   const [form, setForm] = useState({
@@ -9,11 +11,12 @@ function AdminLoginPage({ onLogin }) {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     try {
-      onLogin(form.email, form.password);
+      setError("");
+      await onLogin(form.email, form.password);
       navigate("/admin");
     } catch (submitError) {
       setError(submitError.message);
@@ -24,7 +27,7 @@ function AdminLoginPage({ onLogin }) {
     <div className="auth-shell">
       <section className="auth-card">
         <div className="hero-panel">
-          <div className="brand-badge">ADMIN</div>
+          <BrandSignature contextLabel="Powered by" title="Admin Console" />
           <p className="eyebrow">Coach Access</p>
           <h1>Admin Console Login</h1>
           <p className="hero-copy">
@@ -46,15 +49,14 @@ function AdminLoginPage({ onLogin }) {
             />
           </label>
 
-          <label className="field">
-            <span>Password</span>
-            <input
-              type="password"
-              required
-              value={form.password}
-              onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
-            />
-          </label>
+          <PasswordField
+            label="Password"
+            required
+            value={form.password}
+            onChange={(event) =>
+              setForm((current) => ({ ...current, password: event.target.value }))
+            }
+          />
 
           {error ? <p className="form-error">{error}</p> : null}
 

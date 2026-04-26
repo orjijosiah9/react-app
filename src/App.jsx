@@ -7,37 +7,120 @@ import StudentDashboardPage from "./pages/StudentDashboardPage";
 import AdminUploadPage from "./pages/AdminUploadPage";
 import ResultsPage from "./pages/ResultsPage";
 import AppShell from "./components/AppShell";
-import { defaultExamSettings, defaultQuestions, JUNIOR_CLASSES } from "./data/defaultQuestions";
+import BrandSignature from "./components/BrandSignature";
+import {
+  defaultExamSettings,
+  defaultJuniorQuestions,
+  defaultQuestions,
+  JUNIOR_CLASSES,
+} from "./data/defaultQuestions";
+import { supabase } from "./lib/supabase";
 import {
   authenticateAdmin,
   authenticateStudent,
+  bootstrapAppData,
   clearStoredSession,
+  createStudentFromAdmin,
   deleteStudent,
-  deleteStudentHistory,
-  loadHistory,
-  loadQuestionPools,
-  loadSession,
   loadUsers,
   registerStudent,
-  saveQuestionPools,
   saveHistoryEntry,
-  saveSession
+  saveQuestionPools,
 } from "./utils/storage";
 
 function App() {
   const [theme, setTheme] = useState("day");
-  const [session, setSession] = useState(() => loadSession());
-  const [history, setHistory] = useState(() => loadHistory());
-  const [users, setUsers] = useState(() => loadUsers());
-  const [questionPools, setQuestionPools] = useState(() => loadQuestionPools());
+  const [loading, setLoading] = useState(true);
+  const [appError, setAppError] = useState("");
+  const [session, setSession] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [questionPools, setQuestionPools] = useState(createDefaultQuestionPools());
   const currentQuestionBank = getQuestionBankForSession(session, questionPools);
-  const [examState, setExamState] = useState(() => createExamState(getQuestionBankForSession(null, loadQuestionPools())));
+  const [examState, setExamState] = useState(() =>
+    createExamState(getQuestionBankForSession(null, createDefaultQuestionPools()))
+  );
 
   const isAdmin = session?.role === "admin";
 
   useEffect(() => {
     document.body.classList.toggle("theme-night", theme === "night");
   }, [theme]);
+
+  useEffect(() => {
+    let active = true;
+
+    const syncFromAuth = async (authSession) => {
+      try {
+        if (active) {
+          setLoading(true);
+          setAppError("");
+        }
+
+        const data = await bootstrapAppData(authSession);
+
+        if (!active) {
+          return;
+        }
+
+        setSession(data.session);
+        setUsers(data.users);
+        setHistory(data.history);
+        setQuestionPools(data.questionPools);
+
+        const nextBank = getQuestionBankForSession(data.session, data.questionPools);
+        setExamState(createExamState(nextBank));
+      } catch (error) {
+        if (
+          active &&
+          authSession?.user &&
+          error instanceof Error &&
+          error.message === "No profile was found for this account."
+        ) {
+          await supabase.auth.signOut();
+          setSession(null);
+          setUsers([]);
+          setHistory([]);
+          setQuestionPools(createDefaultQuestionPools());
+          setExamState(
+            createExamState(
+              getQuestionBankForSession(null, createDefaultQuestionPools())
+            )
+          );
+          setLoading(false);
+          return;
+        }
+
+        if (active) {
+          setAppError(error.message);
+          setSession(null);
+          setUsers([]);
+          setHistory([]);
+          setQuestionPools(createDefaultQuestionPools());
+          setExamState(createExamState(getQuestionBankForSession(null, createDefaultQuestionPools())));
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+
+    supabase.auth.getSession().then(({ data }) => {
+      syncFromAuth(data.session);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, authSession) => {
+      syncFromAuth(authSession);
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const appContext = useMemo(
     () => ({
@@ -49,18 +132,18 @@ function App() {
       questionPools,
       examState,
       setExamState,
-      onLogout: () => {
-        clearStoredSession();
-        setSession(null);
+      onLogout: async () => {
+        await clearStoredSession();
       },
       onToggleTheme: () => setTheme((value) => (value === "day" ? "night" : "day")),
-      onSaveQuestionSet: ({ poolKey, config }) => {
+      onSaveQuestionSet: async ({ poolKey, config }) => {
         const nextPools = {
           ...questionPools,
           [poolKey]: config,
         };
-        saveQuestionPools(nextPools);
+        await saveQuestionPools(nextPools);
         setQuestionPools(nextPools);
+
         if (!isAdmin && getPoolKeyForClass(session?.group) === poolKey) {
           setExamState(createExamState(config));
         }
@@ -68,92 +151,179 @@ function App() {
       onResetExam: () => {
         setExamState(createExamState(currentQuestionBank));
       },
-      onRestoreDefaults: (poolKey) => {
-        const restoredPool = {
-          title: poolKey === "junior" ? "JSS Mathematics Mock" : "SS Mathematics Mock",
-          durationMinutes: defaultExamSettings.durationMinutes,
-          questions: defaultQuestions
-        };
+      onRestoreDefaults: async (poolKey) => {
+        const restoredPool =
+          poolKey === "junior"
+            ? {
+                title: "JSS Mathematics Mock",
+                durationMinutes: defaultExamSettings.durationMinutes,
+                questions: defaultJuniorQuestions,
+              }
+            : {
+                title: "SS Mathematics Mock",
+                durationMinutes: defaultExamSettings.durationMinutes,
+                questions: defaultQuestions,
+              };
+
         const nextPools = {
           ...questionPools,
           [poolKey]: restoredPool,
         };
-        saveQuestionPools(nextPools);
+
+        await saveQuestionPools(nextPools);
         setQuestionPools(nextPools);
+
         if (!isAdmin && getPoolKeyForClass(session?.group) === poolKey) {
           setExamState(createExamState(restoredPool));
         }
       },
-      onSaveResult: (result) => {
+      onSaveResult: async (result) => {
         if (!session) {
           return;
         }
 
-        const entry = {
-          ...result,
-          displayName: session.displayName,
-          studentEmail: session.email,
-          group: session.group,
-          poolKey: getPoolKeyForClass(session.group),
-          role: session.role,
-          completedAt: new Date().toLocaleString()
-        };
+        try {
+          const savedEntry = await saveHistoryEntry(session, {
+            ...result,
+            poolKey: getPoolKeyForClass(session.group),
+          });
 
-        const nextHistory = saveHistoryEntry(entry);
-        setHistory(nextHistory);
+          setHistory((current) => [savedEntry, ...current].slice(0, 20));
+        } catch (error) {
+          console.error(error);
+        }
       },
-      onAdminCreateStudent: (payload) => {
-        registerStudent(payload);
-        setUsers(loadUsers());
-      },
-      onAdminRemoveStudent: (email) => {
-        const nextUsers = deleteStudent(email);
-        const nextHistory = deleteStudentHistory(email);
+      onAdminCreateStudent: async (payload) => {
+        await createStudentFromAdmin(payload);
+        const nextUsers = await loadUsers();
         setUsers(nextUsers);
-        setHistory(nextHistory);
-      }
+      },
+      onAdminRemoveStudent: async (email) => {
+        const nextUsers = await deleteStudent(email);
+        setUsers(nextUsers);
+        setHistory((current) => current.filter((entry) => entry.studentEmail !== email));
+      },
     }),
     [session, isAdmin, users, history, questionPools, currentQuestionBank, examState]
   );
 
-  const handleStudentLogin = (email, password) => {
-    const payload = authenticateStudent(email, password);
-    saveSession(payload);
-    setSession(payload);
-    setExamState(createExamState(getQuestionBankForSession(payload, questionPools)));
+  const handleStudentLogin = async (email, password) => {
+    const profile = await authenticateStudent(email, password);
+    setSession(profile);
+    setExamState(createExamState(getQuestionBankForSession(profile, questionPools)));
     return { ok: true };
   };
 
-  const handleRegister = (payload) => {
-    registerStudent(payload);
-    setUsers(loadUsers());
+  const handleRegister = async (payload) => {
+    await registerStudent(payload);
     return { ok: true };
   };
 
-  const handleAdminLogin = (email, password) => {
-    const payload = authenticateAdmin(email, password);
-    saveSession(payload);
-    setSession(payload);
+  const handleAdminLogin = async (email, password) => {
+    const profile = await authenticateAdmin(email, password);
+    setSession(profile);
     return { ok: true };
   };
+
+  if (loading) {
+    return (
+      <div className="loading-shell">
+        <div className="loading-orb loading-orb-left"></div>
+        <div className="loading-orb loading-orb-right"></div>
+        <section className="loading-card">
+          <BrandSignature size="small" contextLabel="Powered by" title="Math Arena" />
+          <p className="eyebrow">Initializing Session</p>
+          <h1>Math Arena</h1>
+          <p className="loading-copy">
+            Preparing your live exam environment, syncing question pools, and loading your secure workspace.
+          </p>
+
+          <div className="loading-visual">
+            <div className="loading-ring">
+              <div className="loading-core"></div>
+            </div>
+            <div className="loading-pulse loading-pulse-one"></div>
+            <div className="loading-pulse loading-pulse-two"></div>
+          </div>
+
+          <div className="loading-progress">
+            <span className="loading-progress-bar"></span>
+          </div>
+
+          <div className="loading-meta">
+            <div className="loading-stat">
+              <span className="meta-label">Status</span>
+              <strong>Connecting</strong>
+            </div>
+            <div className="loading-stat">
+              <span className="meta-label">Mode</span>
+              <strong>Live Sync</strong>
+            </div>
+            <div className="loading-stat">
+              <span className="meta-label">Source</span>
+              <strong>Supabase Cloud</strong>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  if (appError) {
+    return (
+      <div className="auth-shell">
+        <section className="panel panel-page">
+          <p className="eyebrow">Connection Error</p>
+          <h2>Supabase setup needs attention</h2>
+          <p className="form-error">{appError}</p>
+          <p className="panel-copy">
+            Check the SQL setup and confirm your Supabase project contains the required tables and policies.
+          </p>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <Routes>
       <Route
         path="/register"
-        element={session ? <Navigate to={session.role === "admin" ? "/admin" : "/dashboard"} replace /> : <RegisterPage onRegister={handleRegister} />}
+        element={
+          session ? (
+            <Navigate to={session.role === "admin" ? "/admin" : "/dashboard"} replace />
+          ) : (
+            <RegisterPage onRegister={handleRegister} />
+          )
+        }
       />
       <Route
         path="/login"
-        element={session ? <Navigate to={session.role === "admin" ? "/admin" : "/dashboard"} replace /> : <LoginPage onLogin={handleStudentLogin} />}
+        element={
+          session ? (
+            <Navigate to={session.role === "admin" ? "/admin" : "/dashboard"} replace />
+          ) : (
+            <LoginPage onLogin={handleStudentLogin} />
+          )
+        }
       />
       <Route
         path="/admin-login"
-        element={session ? <Navigate to={session.role === "admin" ? "/admin" : "/dashboard"} replace /> : <AdminLoginPage onLogin={handleAdminLogin} />}
+        element={
+          session ? (
+            <Navigate to={session.role === "admin" ? "/admin" : "/dashboard"} replace />
+          ) : (
+            <AdminLoginPage onLogin={handleAdminLogin} />
+          )
+        }
       />
       <Route
         path="/"
-        element={<Navigate to={session ? (session.role === "admin" ? "/admin" : "/dashboard") : "/login"} replace />}
+        element={
+          <Navigate
+            to={session ? (session.role === "admin" ? "/admin" : "/dashboard") : "/login"}
+            replace
+          />
+        }
       />
       <Route
         path="/dashboard"
@@ -201,17 +371,13 @@ function createExamState(questionBank) {
     reviewFlags: Array(sessionQuestions.length).fill(false),
     submitted: false,
     timeLeft: questionBank.durationMinutes * 60,
-    lastResult: null
+    lastResult: null,
   };
 }
 
 function getQuestionBankForSession(session, questionPools) {
   if (!questionPools?.junior || !questionPools?.senior) {
-    return {
-      title: defaultExamSettings.title,
-      durationMinutes: defaultExamSettings.durationMinutes,
-      questions: defaultQuestions,
-    };
+    return createDefaultQuestionPools().senior;
   }
 
   const poolKey = getPoolKeyForClass(session?.group);
@@ -237,12 +403,19 @@ function buildSessionQuestions(questions, limit) {
   return shuffled.slice(0, Math.min(limit, shuffled.length));
 }
 
-function ProtectedRoute({ session, children }) {
-  if (!session) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return children;
+function createDefaultQuestionPools() {
+  return {
+    junior: {
+      title: "JSS Mathematics Mock",
+      durationMinutes: defaultExamSettings.durationMinutes,
+      questions: defaultJuniorQuestions,
+    },
+    senior: {
+      title: "SS Mathematics Mock",
+      durationMinutes: defaultExamSettings.durationMinutes,
+      questions: defaultQuestions,
+    },
+  };
 }
 
 function StudentRoute({ session, children }) {

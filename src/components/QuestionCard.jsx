@@ -1,5 +1,8 @@
+import { useState } from "react";
+
 function QuestionCard({ context, onSubmit }) {
   const { examState, setExamState } = context;
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const question = examState.questions[examState.currentIndex];
 
   if (!question) {
@@ -30,7 +33,11 @@ function QuestionCard({ context, onSubmit }) {
             <p className="eyebrow">Question Prompt</p>
             <h3>Question {examState.currentIndex + 1}</h3>
           </div>
-          <button className="primary-button" onClick={onSubmit}>
+          <button
+            className="primary-button"
+            onClick={() => setShowSubmitConfirm(true)}
+            disabled={examState.submitted}
+          >
             Submit Test
           </button>
         </div>
@@ -120,6 +127,32 @@ function QuestionCard({ context, onSubmit }) {
           </div>
         </div>
       </section>
+
+      {showSubmitConfirm ? (
+        <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="submit-modal-title">
+          <div className="confirm-card">
+            <p className="eyebrow">Confirm Submission</p>
+            <h2 id="submit-modal-title">Are you sure you want to submit?</h2>
+            <p className="panel-copy">
+              Once you submit, your answers will be scored immediately.
+            </p>
+            <div className="confirm-actions">
+              <button className="ghost-button" onClick={() => setShowSubmitConfirm(false)}>
+                No
+              </button>
+              <button
+                className="primary-button"
+                onClick={() => {
+                  setShowSubmitConfirm(false);
+                  onSubmit();
+                }}
+              >
+                Yes
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }

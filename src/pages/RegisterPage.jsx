@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import BrandSignature from "../components/BrandSignature";
+import PasswordField from "../components/PasswordField";
 import { CLASS_OPTIONS } from "../data/defaultQuestions";
 
 function RegisterPage({ onRegister }) {
@@ -14,7 +16,7 @@ function RegisterPage({ onRegister }) {
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (!form.displayName.trim() || !form.email.trim() || !form.password) {
@@ -37,7 +39,7 @@ function RegisterPage({ onRegister }) {
 
     try {
       setError("");
-      onRegister(form);
+      await onRegister(form);
       setSuccess("Registration successful. Redirecting to login...");
       window.setTimeout(() => {
         navigate("/login");
@@ -52,7 +54,7 @@ function RegisterPage({ onRegister }) {
     <div className="auth-shell">
       <section className="auth-card">
         <div className="hero-panel">
-          <div className="brand-badge">CBT</div>
+          <BrandSignature contextLabel="Powered by" title="Math Arena" />
           <p className="eyebrow">Student Registration</p>
           <h1>Join Math Arena</h1>
           <p className="hero-copy">
@@ -98,25 +100,26 @@ function RegisterPage({ onRegister }) {
             </select>
           </label>
 
-          <label className="field">
-            <span>Password</span>
-            <input
-              type="password"
-              required
-              value={form.password}
-              onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
-            />
-          </label>
+          <PasswordField
+            label="Password"
+            required
+            value={form.password}
+            onChange={(event) =>
+              setForm((current) => ({ ...current, password: event.target.value }))
+            }
+          />
 
-          <label className="field">
-            <span>Confirm Password</span>
-            <input
-              type="password"
-              required
-              value={form.confirmPassword}
-              onChange={(event) => setForm((current) => ({ ...current, confirmPassword: event.target.value }))}
-            />
-          </label>
+          <PasswordField
+            label="Confirm Password"
+            required
+            value={form.confirmPassword}
+            onChange={(event) =>
+              setForm((current) => ({
+                ...current,
+                confirmPassword: event.target.value,
+              }))
+            }
+          />
 
           {error ? <p className="form-error">{error}</p> : null}
           {success ? <p className="form-success">{success}</p> : null}

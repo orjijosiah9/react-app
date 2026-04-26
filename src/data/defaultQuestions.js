@@ -22,6 +22,30 @@ export const JUNIOR_CLASSES = ["JSS1", "JSS2", "JSS3"];
 
 export const SENIOR_CLASSES = ["SS1", "SS2", "SS3"];
 
+export const defaultJuniorQuestions = [
+  { text: "What is 7 + 8?", options: ["13", "14", "15", "16"], answer: 2 },
+  { text: "Subtract 19 from 45.", options: ["24", "25", "26", "27"], answer: 2 },
+  { text: "What is 6 x 7?", options: ["36", "40", "42", "48"], answer: 2 },
+  { text: "Divide 72 by 9.", options: ["6", "7", "8", "9"], answer: 2 },
+  { text: "Write 0.5 as a fraction.", options: ["1/5", "1/4", "1/3", "1/2"], answer: 3 },
+  { text: "Find the value of 3^2.", options: ["3", "6", "9", "12"], answer: 2 },
+  { text: "How many sides does a hexagon have?", options: ["5", "6", "7", "8"], answer: 1 },
+  { text: "What is the perimeter of a square of side 5 cm?", options: ["10 cm", "15 cm", "20 cm", "25 cm"], answer: 2 },
+  { text: "Convert 250 cm to metres.", options: ["0.25 m", "2.5 m", "25 m", "2500 m"], answer: 1 },
+  { text: "What is 3/4 of 20?", options: ["10", "12", "15", "18"], answer: 2 },
+  { text: "Find the HCF of 12 and 18.", options: ["2", "3", "6", "9"], answer: 2 },
+  { text: "What is the next number: 5, 10, 15, 20, ...?", options: ["21", "22", "24", "25"], answer: 3 },
+  { text: "If a pencil costs N15, how much do 4 pencils cost?", options: ["N45", "N50", "N55", "N60"], answer: 3 },
+  { text: "What is the area of a rectangle of length 8 cm and breadth 3 cm?", options: ["11 cm2", "24 cm2", "22 cm2", "48 cm2"], answer: 1 },
+  { text: "Which of these is an even number?", options: ["17", "19", "22", "25"], answer: 2 },
+  { text: "Simplify: 18 / 3 + 2.", options: ["6", "7", "8", "9"], answer: 2 },
+  { text: "How many minutes are in 2 hours?", options: ["60", "90", "120", "180"], answer: 2 },
+  { text: "What is the value of 11 x 11?", options: ["111", "121", "131", "141"], answer: 1 },
+  { text: "Round 47.6 to the nearest whole number.", options: ["47", "48", "49", "50"], answer: 1 },
+  { text: "A triangle has angles 50 degrees and 60 degrees. What is the third angle?", options: ["60 degrees", "70 degrees", "80 degrees", "90 degrees"], answer: 1 },
+];
+
+
 export const defaultQuestions = [
  
   {

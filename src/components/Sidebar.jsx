@@ -1,4 +1,5 @@
 import QuestionPalette from "./QuestionPalette";
+import BrandSignature from "./BrandSignature";
 
 function Sidebar({ context }) {
   const { session, questionBank, examState } = context;
@@ -14,7 +15,7 @@ function Sidebar({ context }) {
     return (
       <aside className="sidebar">
         <div className="brand-card">
-          <div className="brand-badge">ADMIN</div>
+          <BrandSignature size="small" contextLabel="Powered by" title="Math Arena" />
           <p className="eyebrow">Control Room</p>
           <h1>Math Arena</h1>
         </div>
@@ -58,7 +59,7 @@ function Sidebar({ context }) {
   return (
     <aside className="sidebar">
       <div className="brand-card">
-        <div className="brand-badge">CBT</div>
+        <BrandSignature size="small" contextLabel="Powered by" title="Math Arena" />
         <p className="eyebrow">Live Session</p>
         <h1>Math Arena</h1>
       </div>

@@ -26,13 +26,18 @@ function StudentDashboardPage({ context }) {
     }
   }, [examState, questionBank, setExamState]);
 
+  useEffect(() => {
+    if (examState.submitted && examState.lastResult) {
+      navigate("/results");
+    }
+  }, [examState.submitted, examState.lastResult, navigate]);
+
   useExamEngine(examState, setExamState, context.onSaveResult, session?.displayName);
 
   const handleSubmit = () => {
     setExamState((current) =>
       submitCurrentExam(current, context.onSaveResult, session?.displayName)
     );
-    navigate("/results");
   };
 
   const handleRestart = () => {
