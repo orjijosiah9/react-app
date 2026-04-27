@@ -1,4 +1,5 @@
 import { useState } from "react";
+import MathText from "./MathText";
 
 function QuestionCard({ context, onSubmit }) {
   const { examState, setExamState } = context;
@@ -43,7 +44,7 @@ function QuestionCard({ context, onSubmit }) {
         </div>
 
         <article className="question-body">
-          <p>{question.text}</p>
+          <MathText text={question.text} />
         </article>
 
         <section className="option-list" aria-label="Answer options">
@@ -71,7 +72,7 @@ function QuestionCard({ context, onSubmit }) {
                   }
                 />
                 <span className="option-badge">{String.fromCharCode(65 + index)}</span>
-                <span>{option}</span>
+                <MathText text={option} />
               </label>
             );
           })}

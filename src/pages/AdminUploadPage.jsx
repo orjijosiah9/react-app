@@ -278,11 +278,23 @@ function normalizeQuestions(parsed) {
     }
 
     return {
-      text: item.text.trim(),
-      options: item.options.map((option) => String(option).trim()),
+      text: cleanImportedText(item.text),
+      options: item.options.map((option) => cleanImportedText(String(option))),
       answer: item.answer,
     };
   });
+}
+
+function cleanImportedText(value) {
+  return value
+    .trim()
+    .replace(/\\\(_\{two\}\\\)/gi, " (base 2)")
+    .replace(/\\\(_\{ten\}\\\)/gi, " (base 10)")
+    .replace(/\\\(_\{eight\}\\\)/gi, " (base 8)")
+    .replace(/\\\(_\{sixteen\}\\\)/gi, " (base 16)")
+    .replace(/\\\(_\{([a-z0-9+\-]+)\}\\\)/gi, " (base $1)")
+    .replace(/\s{2,}/g, " ")
+    .trim();
 }
 
 function buildPoolImports(parsed, activePoolKey, title, duration) {

@@ -706,6 +706,25 @@ body.theme-night .field select {
   line-height: 1.8;
 }
 
+.math-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.question-body .math-text {
+  display: block;
+}
+
+.option-card .math-text {
+  display: inline;
+  line-height: 1.6;
+}
+
+.math-text sub,
+.math-text sup {
+  font-size: 0.8em;
+}
+
 .option-list {
   display: grid;
   gap: 14px;
